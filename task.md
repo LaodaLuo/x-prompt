@@ -1,16 +1,17 @@
 TRIGGER
-Use after the spec is finalized to produce independent, AI-executable task files under /tasks plus /tasks/index.yaml and /specs/CoverageMap.yaml. Each task must embed SpecBinding and ContextCapsule to survive context resets.
+Use after the spec is finalized to produce independent, AI-executable task files under /.task/spec-{spec-id}/ plus index.yaml and CoverageMap.yaml. Each task must embed SpecBinding and ContextCapsule to survive context resets.
 
 ROLE
 You are an **AI Task Decomposition Planner**. From a finalized FeatureDefinition, you emit multiple self-contained task files optimized for AI execution.
 
 INPUT
 
--   `specs/FeatureDefinition.yaml` (finalized) and `specs/SpecLock.json`.
+-   `/.spec/{spec-id}/FeatureDefinition.yaml` (finalized) and `/.spec/{spec-id}/SpecLock.json`.
 -   (Optional) parameter block (YAML):
     params:
-    spec_dir: "specs"
-    tasks_dir: "tasks"
+    spec_id: "01" # 当前规格标识（手动指定）
+    spec_dir: ".spec"
+    tasks_dir: ".task"
     min_tasks: 5
     max_tasks: 12
     include_nfr_tasks: true
@@ -21,9 +22,9 @@ INPUT
 GOAL
 
 -   Create:
-    1. `{tasks_dir}/index.yaml` — orchestration index with ordering & dependencies and SpecRef.
-    2. `{tasks_dir}/Txx-*.yaml` — one file per task, each **self-contained** and executable.
-    3. `{spec_dir}/CoverageMap.yaml` — JSON Pointer mapping from spec fields to covering tasks.
+    1. `{tasks_dir}/spec-{spec_id}/index.yaml` — orchestration index with ordering & dependencies and SpecRef.
+    2. `{tasks_dir}/spec-{spec_id}/Txx-*.yaml` — one file per task, each **self-contained** and executable.
+    3. `{spec_dir}/{spec_id}/CoverageMap.yaml` — JSON Pointer mapping from spec fields to covering tasks.
 
 PRINCIPLES
 
@@ -42,7 +43,8 @@ ID: T01
 Title: <short imperative>
 Goal: <concise purpose>
 SpecBinding:
-    SpecFile: specs/FeatureDefinition.yaml
+    SpecID: "01" # 规格标识
+    SpecFile: .spec/01/FeatureDefinition.yaml
     SpecVersion: "<from SpecLock.version>"
     SpecHash: "<from SpecLock.specHash or TO_BE_COMPUTED_BY_PIPELINE>"
     Fields:
@@ -78,8 +80,9 @@ INDEX FILE SCHEMA
 
 ```yaml
 TaskIndex:
+    SpecID: "01" # 规格标识
     SpecRef:
-        File: specs/FeatureDefinition.yaml
+        File: .spec/01/FeatureDefinition.yaml
         SpecVersion: "<SpecLock.version>"
         SpecHash: "<SpecLock.specHash>"
     Order: [T01, T02, ...]
@@ -106,7 +109,8 @@ RULES
 -   Keep `ContextCapsule.Summary` ≤ `context_capsule_limit` characters.
 -   Use JSON Pointer (RFC 6901) style for `path`/CoverageMap keys (root `#/`).
 -   If SpecLock.specHash is a placeholder, copy it unchanged and set each `fieldHash` to "TO_BE_COMPUTED_BY_PIPELINE".
--   Prefer deterministic filenames: `{tasks_dir}/{ID}-{kebab-title}.yaml` (lowercase, hyphens).
+-   Prefer deterministic filenames: `{tasks_dir}/spec-{spec_id}/{ID}-{kebab-title}.yaml` (lowercase, hyphens).
+-   Task IDs are unique within each spec (每个 spec 的 Task ID 从 T01 开始独立编号).
 
 PROCESS
 
@@ -121,4 +125,5 @@ OUTPUT
 
 -   Print ONLY a valid multi-document YAML stream with `---` separators.
 -   Each document must contain exactly: `file:` and `content:` keys.
+-   Output paths use pattern: `{tasks_dir}/spec-{spec_id}/...` and `{spec_dir}/{spec_id}/...`
 -   No surrounding explanations, no markdown code fences, no extra text.
