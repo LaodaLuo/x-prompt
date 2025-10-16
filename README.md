@@ -44,6 +44,8 @@
 **核心机制**
 SpecBinding、ContextCapsule、CoverageMap、TaskIndex 四要素保障抗漂移与独立执行。Task ID 在规格内独立编号。
 
+**MCP 文档绑定**：任务涉及外部 API/库时，通过 Tools.MCPDocuments 绑定官方文档，执行时自动获取最新版本，减少 API 幻觉。
+
 ---
 
 ## 阶段 ③：单任务执行
@@ -66,6 +68,7 @@ SpecBinding、ContextCapsule、CoverageMap、TaskIndex 四要素保障抗漂移�
 -   **零记忆执行** - 每个任务通过ContextCapsule自包含所需上下文
 -   **覆盖追溯** - CoverageMap确保规格字段完整覆盖
 -   **执行准确性** - ValidationCriteria质量保障，PASS/FAIL明确
+-   **MCP 文档集成** - 自动获取外部库最新文档，减少 API 幻觉，提升代码准确性
 -   **极致轻量** - 单文件报告，零审计开销，token消耗降低70%+
 -   **层级隔离** - 规格→任务→执行三层目录结构，归属关系清晰
 -   **FIF 多文档 YAML** - 统一文件落盘格式，支持自动化与CI集成

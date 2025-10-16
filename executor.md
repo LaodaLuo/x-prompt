@@ -18,6 +18,7 @@ INPUT
     overwrite_policy: "safe" # "safe" | "force"
     allow_external_network: false
     language: "auto" # mirror task language; fallback English
+    mcp_timeout_sec: 30 # MCP 工具调用超时时间
 
 GOAL
 Execute the task deterministically and safely, even with no global context. Produce artifacts and a minimal single-file `ExecutionReport`.
@@ -31,6 +32,15 @@ EXECUTION PRINCIPLES
     - Compare `SpecBinding.SpecVersion` with `SpecLock.version`.
     - If `SpecBinding.SpecHash` differs from `SpecLock.specHash` AND `SpecLock.specHash` is not a placeholder, **abort** and emit a drift report (do not execute).
     - For each bound field, verify current spec value against `SpecBinding.Fields[*].value`. If mismatch, **abort** with drift details.
+
+1.5. **MCP Document Fetch**:
+
+    - If task contains `Tools.MCPDocuments`, fetch documentation before execution:
+      - For each document entry, call the specified MCP tool (e.g., `mcp__context7__get-library-docs`).
+      - Pass libraryID, topic, and tokens parameters.
+      - Store fetched documentation in execution context for reference.
+      - If fetch fails, **abort** with error: "Failed to fetch required documentation: {libraryID}".
+    - If `allow_external_network` is false but MCPDocuments exists, **abort** with error.
 
 2. **Inputs & Tools Gate**:
 
@@ -49,7 +59,10 @@ EXECUTION PRINCIPLES
 
     - Create exactly the files/patterns in `ExpectedOutput`.
     - Evaluate `ValidationCriteria` with clear PASS/FAIL status.
-    - If any FAIL: mark status `failed` and report error.
+    - For API compliance criteria:
+      - If task has MCPDocuments, verify all API usage against fetched documentation.
+      - Check that code comments reference documentation sources when applicable.
+    - If any FAIL: mark status `failed` and report error with specific validation failure.
 
 5. **Reporting**:
 

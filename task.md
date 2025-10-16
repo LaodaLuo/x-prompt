@@ -32,6 +32,7 @@ PRINCIPLES
 -   Each task embeds:
     -   **SpecBinding**: spec file, version, overall hash placeholder, and BOUND fields list with JSON Pointers + field values + field digests (set digests placeholder if hash_policy external).
     -   **ContextCapsule**: high-density Summary (≤ context_capsule_limit), ParameterSheet, NFR (relevant subset), SpecExcerpts (verbatim snippets with JSON Pointers).
+    -   **Tools.MCPDocuments**: (when task involves external APIs/libraries) specify MCP tool and library IDs for documentation fetch.
 -   Include both **Functional** and **NonFunctional** tasks (performance test, docs, security hardening, etc.) when `include_nfr_tasks: true`.
 -   IDs: sequential `T01`, `T02`, … with short imperative Titles (≤ 8 words).
 -   Output strictly via **Filesystem‑Intent Format (FIF)** multi-doc YAML; **no extra prose**.
@@ -63,6 +64,12 @@ ContextCapsule:
 Inputs: <data, files, parameters the AI must use>
 Tools:
     Allowed: ["fs.read", "fs.write", ...]
+    MCPDocuments:  # 可选：当任务涉及外部 API/库时必填
+        - tool: "mcp__context7__get-library-docs"
+          libraryID: "/org/project"  # Context7 库标识
+          topic: "<API topic>"  # 聚焦主题
+          tokens: 3000  # 文档 token 数
+          note: "<使用说明>"
 ExecutionPlan:
     - <step1>
     - <step2>
@@ -71,6 +78,7 @@ ExpectedOutput: <artifact paths, files pattern, code modules, etc.>
 ValidationCriteria:
     - <assertion1>
     - <assertion2>
+    - "所有外部 API 必须来自 MCPDocuments 指定的文档"  # API 合规性（若有 MCPDocuments）
 Dependencies: [Txx, ...]
 Category: <Functional|NonFunctional:Performance|NonFunctional:Security|...>
 Version: "1.0.0"
@@ -116,7 +124,9 @@ PROCESS
 
 1. Read FeatureDefinition + SpecLock; extract functional slices and NFRs.
 2. Draft tasks (Functional + NonFunctional). Ensure atomicity and minimal inter-task coupling.
-3. For each task, fill SpecBinding (include the **exact** fields it depends on) and ContextCapsule.
+3. For each task, fill SpecBinding and ContextCapsule.
+   - If task involves external APIs/libraries, add MCPDocuments to Tools section.
+   - Specify exact library IDs and topics for documentation fetch.
 4. Build TaskIndex with logical Order and Dependencies.
 5. Build CoverageMap that references **all** key fields in FeatureDefinition.
 6. Emit all files via FIF multi-document YAML.
